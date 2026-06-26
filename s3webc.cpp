@@ -9,9 +9,9 @@ typedef struct Command {
 } Command;
 
 int main() {
-    char escapechar = ';';
-    string input = "sma,1;   \n asm,2,-1;dih;";
-
+    char escapechar = *";";
+    char seperatorchar = *",";
+    string input; getline(cin, input);
     //split file into separate commmands
     vector<string> pos;
     string prev = "";
@@ -19,7 +19,7 @@ int main() {
         if (i == *"\n" || i == *" ") {
             //do nothing
         } else if (i == escapechar) {
-            pos.push_back(prev + ",");
+            pos.push_back(prev + seperatorchar);
             prev = "";
         } else {
             prev = prev + i;
@@ -30,7 +30,7 @@ int main() {
         cout << "(" << i << "), ";
     } cout << "]" << endl;
 
-    //split commands into tokens
+    //split commands into seperate tokens/arguments
     vector<Command> commands = {};
     for (string item : pos) {
         string prev = "";
@@ -39,7 +39,7 @@ int main() {
         unsigned char index = 1;
         for (char chr : item) {
             //parse the string
-            if (chr == *",") {
+            if (chr == seperatorchar) {
                 if (index == 1){
                     maincommand.soundname = prev;
                 } else if (index == 2) {
@@ -49,13 +49,13 @@ int main() {
                 }
                 ++index;
                 prev = "";
-                
             } else {
                 prev = prev + chr;
             }
         }
         commands.push_back(maincommand);
     }
+    //output commands
     cout << "[";
     for (auto i : commands) {
         cout << " [" << i.soundname << "," << i.speed << "," << i.volume << "],";

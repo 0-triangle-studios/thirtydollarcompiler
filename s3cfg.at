@@ -1,0 +1,11 @@
+!speed|setspeed;
+!volume|setvolume;
+!stop|pause;
+!transpose|pitchshift;
+!looptarget|looptarget;
+!loop|gotoloop;
+!jump|gototarget;
+!target|settarget;
+!cut|stopallsounds;
+!startpos|startpos;
+_pause|/;

@@ -8,4 +8,9 @@
 !target|settarget;
 !cut|stopallsounds;
 !startpos|startpos;
+!combine|&&;
+!divider|newline;
 _pause|/;
+
+
+boom|vineboom;

@@ -22,12 +22,12 @@ bool AliasExists(std::vector<string>& atlist, string element) {
     return (std::find(atlist.begin(), atlist.end(), element) != atlist.end());
 }
 
-void GetAliasTable (vector<string> &keywords, vector<string> &functions, vector<string> &compiledkeywords, string atname) {
+void GetAliasTable (vector<string> &keywords, vector<string> &functions, vector<string> &opcodes, string atname) {
     //get alias table
     string aliastable;
     LoadFromFile(atname, aliastable);
     //parse alias table
-    //into keywords, functions and compiled keywords
+    //into keywords, functions and operation codes
     //keywords are technically a subset of functions
     string prev = "";
     bool ifkeyword = false;
@@ -35,7 +35,7 @@ void GetAliasTable (vector<string> &keywords, vector<string> &functions, vector<
         if (item == *"\n" || item == *" ") {
             //do nothing
         } else if (item == *"|") {
-            compiledkeywords.push_back(prev);
+            opcodes.push_back(prev);
             prev = "";
         } else if (item == *";") {
             if (ifkeyword) {
@@ -61,14 +61,22 @@ int main() {
     const short int soundminspeed = -60;
     const unsigned short int soundmaxvolume = 400;
     const unsigned short int soundminvolume = 0;
-    //get alias table
-    vector<string> keywords, functions, compiledkeywords;
-    GetAliasTable(keywords, functions, compiledkeywords, "s3cfg.at");
+    //first two values of criticals MUST be speed and volume
+    /*const*/vector<string> criticals = {"!speed", "!volume", "!stop", "!jump", "!target"};
 
-    string input; getline(cin, input);
+    string file, input; 
+    cout << "\nInput s30web file: "; getline(cin, file);
+    cout << endl << "Loading file...";
+    LoadFromFile(file, input); 
+
+    //get alias table
+    vector<string> keywords, functions, opcodes;
+    cout << endl << "Retrieving alias table...";
+    GetAliasTable(keywords, functions, opcodes, "s3cfg.at");
     //split file into separate commands
     vector<string> pos;
     string prev = "";
+    cout << endl << "Reading file...";
     for (char item : input) {
         if (item == *"\n" || item == *" ") {
             //do nothing
@@ -82,6 +90,7 @@ int main() {
 
     //split commands into seperate tokens/arguments
     vector<Command> commands = {};
+    cout << endl << "Parsing file...";
     for (string lineitem : pos) {
         string prev = "";
         Command maincommand = {"", 0, 0};
@@ -105,20 +114,37 @@ int main() {
         }
         commands.push_back(maincommand);
     }
-    //output commands
-    cout << "[";
-    for (auto item : commands) {
-        cout << " [" << item.soundname << "," << item.speed << "," << item.volume << "],";
-    } cout << "]" << endl;
     
     //perform checks on all the values
     unsigned int line = 0;
     bool stopcompile = false; //flag used to stop further compilation
+    cout << endl << "Checking file for errors:";
     for (auto item : commands) {
         ++line;
         if (AliasExists(keywords, item.soundname)) {
-            //do some check or smth, specific to keywords
-            //make sure it has the right arguments idk
+            //do the actual checks for keywords
+            //get command index
+            unsigned short int commandID = std::distance(functions.begin(), std::find(functions.begin(), functions.end(), item.soundname));
+            //check if keyword maps to a critical compiled keyword
+            if (AliasExists(criticals, opcodes[commandID])) {
+                //make sure speed is greater than 0
+                if (item.speed < 0) {
+                    cerr << "Error with keyword item '" << item.soundname << "': First argument must be either greater than or equal to zero" << endl; 
+                    stopcompile = true;
+                }
+                if ((opcodes[commandID] == criticals[1] || opcodes[commandID] == criticals[0])) {
+                    if ( !(item.volume >= -1 && item.volume <= 1)) {
+                        cerr << "Error with keyword item '" << item.soundname << "': Second argument must be within 1 and -1 (as those numbers map to it's button options)";
+                        stopcompile = true;
+                    }
+                }
+            } else {
+                if (item.speed != 0 || item.volume != 0) {
+                    cerr << "Warning with keyword item '" << item.soundname << "': This is a special keyword that takes no arguments. All arguments will be ignored" << endl;
+                    //forcefully ignore arguments provided
+                    item.speed = 0; item.volume = 0;
+                }
+            }
         } else if (AliasExists(functions, item.soundname)) {
             //make sure speed and volume are within limits
             if (!(item.speed <= soundmaxspeed && item.speed >= soundminspeed)) {
@@ -135,14 +161,47 @@ int main() {
             cerr << "Error with item '" << item.soundname << "': Item does not exist in alias table (as a keyword or a sound)";
         }
     } if (stopcompile) { return -1; }
+    cout << " No errors found!";
 
-    //convert to compiled keywords and write it all to a file
+    //convert to operation codes and write it all to a file
+    pos = {};
+    cout << endl << "Mapping commands to thirtydollar.website operation codes";
     for (auto item : commands) {
         //link command to it's compiled command
-        auto iterator = std::find(functions.begin(), functions.end(), item.soundname);
-    //there was an if statement here (from AI) that i felt was redundant 
-    //  if(iterator != functions.end()) { :the code below: } else {cerr << "System error, please restart the program";}
-        unsigned short int commandID = std::distance(functions.begin(), iterator);
-        cout << "First command ID found: " << commandID << " " << functions[commandID] << endl;
+        unsigned short int commandID = std::distance(functions.begin(), std::find(functions.begin(), functions.end(), item.soundname));
+                
+        //format item into var@x@y (for keyword) and var@x%y (for function) syntax
+        string opcode = opcodes[commandID];
+        if (item.speed != 0 || AliasExists(keywords, item.soundname)) {
+            opcode += "@" + to_string(item.speed);
+        }
+        if (item.volume != 0){
+            if (!AliasExists(keywords, item.soundname)) { 
+                opcode += "%" + to_string(item.volume);
+            } else {
+                if (opcodes[commandID] == criticals[1] || opcodes[commandID] == criticals[0]) {
+                    //setspeed and setvolume has a custom character instead of a number
+                    if (item.volume == 1) {
+                        opcode += "@x";
+                    } else if (item.volume == -1) {
+                        opcode += "@+";
+                    }
+                } else {
+                    opcode += "@" + to_string(item.volume);
+                }
+            }
+            
+        }
+        pos.push_back(opcode);
     }
+    //output compiled commands
+    cout << endl << "Writing to file...";
+    string output = "";
+    for (auto item : pos) {
+        string += item + "|";
+    }
+    string outputname = GetFileName(file, "moai");
+    SaveToFile(outputname, output);
+    cout << "\n\n All done! You can see the compiled .moai file in your current directory, under the name of '" << outputname << "'!";
+    return 0;
 }

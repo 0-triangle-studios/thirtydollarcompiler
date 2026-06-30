@@ -198,10 +198,10 @@ int main() {
     cout << endl << "Writing to file...";
     string output = "";
     for (auto item : pos) {
-        string += item + "|";
+        output += item + "|";
     }
     string outputname = GetFileName(file, "moai");
     SaveToFile(outputname, output);
-    cout << "\n\n All done! You can see the compiled .moai file in your current directory, under the name of '" << outputname << "'!";
+    cout << "\n\nAll done! You can see the compiled .moai file in your current directory, under the name of '" << outputname << "'!" << endl;
     return 0;
 }

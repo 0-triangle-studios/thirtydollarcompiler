@@ -78,7 +78,7 @@ int main() {
     string prev = "";
     cout << endl << "Reading file...";
     for (char item : input) {
-        if (item == *"\n" || item == *" ") {
+        if (item == *"\n" || item == *" " || item == *"\t") {
             //do nothing
         } else if (item == escapechar) {
             pos.push_back(prev + seperatorchar);
@@ -86,7 +86,7 @@ int main() {
         } else {
             prev = prev + item;
         }        
-    }
+    }//for (string posstr : pos) { cout << "[" << posstr << "], "; }
 
     //split commands into seperate tokens/arguments
     vector<Command> commands = {};
@@ -194,14 +194,18 @@ int main() {
         }
         pos.push_back(opcode);
     }
-    //output compiled commands
+    //write compiled commands
     cout << endl << "Writing to file...";
     string output = "";
     for (auto item : pos) {
         output += item + "|";
     }
+    if (output == "") {
+        cout << "\n\nFile was not able to be written. Fix any errors before recompiling, or make sure your file is not corrupted." << endl;
+    } else {
     string outputname = GetFileName(file, "moai");
     SaveToFile(outputname, output);
     cout << "\n\nAll done! You can see the compiled .moai file in your current directory, under the name of '" << outputname << "'!" << endl;
     return 0;
+    }
 }

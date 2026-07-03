@@ -1,0 +1,20 @@
+newline; #xx# 
+	setspeed,400
+	looptarget;
+	vineboom;&&;vineboom;
+	vineboom;
+	vineboom;&&;vineboom;
+	vineboom;
+	gotoloop;
+	gotoloop;
+	gotoloop;
+	gotoloop;
+	gotoloop;
+newline;
+	looptarget;
+	vineboom,-20,200;
+	gotoloop;
+	gotoloop;
+	gotoloop;
+	gotoloop;
+	gotoloop;

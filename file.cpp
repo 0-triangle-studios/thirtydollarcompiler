@@ -20,6 +20,26 @@ std::string GetFileName(const std::string& filename, const std::string& filetype
     return file;
 }
 
+//this function needs fixing
+std::string GetFileType(std::string& filename) {
+    std::string filetype = "";
+    bool foundfiletype = false;
+    for(auto letter: filename) {
+        //std::cout << letter << filename;
+        if (letter == *".") {
+            if (foundfiletype) {
+                filetype = "";
+            } else {
+                foundfiletype = true;
+            }
+        }
+        if (foundfiletype) {
+            filetype += letter;
+        }
+    }
+    return filetype;
+}
+
 void SaveToFile(std::string filename, std::string &input) {
     std::ofstream mainfile(filename);
     //save to file if file is fit for use

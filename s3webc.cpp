@@ -56,6 +56,7 @@ void GetAliasTable (vector<string> &keywords, vector<string> &functions, vector<
 int main() {
     const char escapechar = *";";
     const char seperatorchar = *",";
+    const char commentchar = *"#";
 
     const short int soundmaxspeed = 60;
     const short int soundminspeed = -60;
@@ -64,10 +65,17 @@ int main() {
     //first two values of criticals MUST be speed and volume
     /*const*/vector<string> criticals = {"!speed", "!volume", "!stop", "!jump", "!target"};
 
-    string file, input; 
+    string file = "", input = ""; 
     cout << "\nInput s30web file: "; getline(cin, file);
     cout << endl << "Loading file...";
     LoadFromFile(file, input); 
+    if (input == "") {
+        cerr << endl << "File was unable to be loaded. Make sure the file exists before retrying" << endl;
+        return -2;
+    } else if (GetFileType(file) != ".s30web") {
+        cerr << endl << "File is of an invalid file format. Make sure the file is an '.s30web' file before retrying" << endl;
+        return -2;
+    }
 
     //get alias table
     vector<string> keywords, functions, opcodes;
@@ -76,9 +84,14 @@ int main() {
     //split file into separate commands
     vector<string> pos;
     string prev = "";
+    bool comment = false;
     cout << endl << "Reading file...";
     for (char item : input) {
-        if (item == *"\n" || item == *" " || item == *"\t") {
+        //commenting system has errors
+        if (item == commentchar) {
+            comment = comment ? false : true;
+        }
+        if (comment || item == *"#" || item == *"\n" || item == *" " || item == *"\t") {
             //do nothing
         } else if (item == escapechar) {
             pos.push_back(prev + seperatorchar);
@@ -119,8 +132,15 @@ int main() {
     unsigned int line = 0;
     bool stopcompile = false; //flag used to stop further compilation
     cout << endl << "Checking file for errors:";
+    //File wide errors
+    if (comment == true) {
+        //make sure there are no dangling comments
+        cerr << "\n\nError found with a dangling (unenclosed) comment line" << endl;
+        stopcompile = true;
+    }
+    //Specific command argument related errors
     for (auto item : commands) {
-        ++line;
+        ++line;        
         if (AliasExists(keywords, item.soundname)) {
             //do the actual checks for keywords
             //get command index
@@ -129,12 +149,12 @@ int main() {
             if (AliasExists(criticals, opcodes[commandID])) {
                 //make sure speed is greater than 0
                 if (item.speed < 0) {
-                    cerr << "Error with keyword item '" << item.soundname << "': First argument must be either greater than or equal to zero" << endl; 
+                    cerr << "\n\nError with keyword item '" << item.soundname << "': First argument must be either greater than or equal to zero" << endl; 
                     stopcompile = true;
                 }
                 if ((opcodes[commandID] == criticals[1] || opcodes[commandID] == criticals[0])) {
                     if ( !(item.volume >= -1 && item.volume <= 1)) {
-                        cerr << "Error with keyword item '" << item.soundname << "': Second argument must be within 1 and -1 (as those numbers map to it's button options)";
+                        cerr << "\n\nError with keyword item '" << item.soundname << "': Second argument must be within 1 and -1 (as those numbers map to it's button options)";
                         stopcompile = true;
                     }
                 }
@@ -149,16 +169,16 @@ int main() {
             //make sure speed and volume are within limits
             if (!(item.speed <= soundmaxspeed && item.speed >= soundminspeed)) {
                 stopcompile = true;
-                cerr << "Error with sound item '" << item.soundname << "' (at line " << line << "). Sound speed must be within " << soundmaxspeed << " units and " << soundminspeed << " units." << endl;
+                cerr << "\n\nError with sound item '" << item.soundname << "' (at line " << line << "). Sound speed must be within " << soundmaxspeed << " units and " << soundminspeed << " units." << endl;
             }
             if (!(item.volume <= soundmaxvolume && item.volume >= soundminvolume)) {
                 stopcompile = true;
-                cerr << "Error with sound item '" << item.soundname << "' (at line " << line << "). Sound volume must be within " << soundmaxvolume << " units and " << soundminvolume << " units." << endl;
+                cerr << "\n\nError with sound item '" << item.soundname << "' (at line " << line << "). Sound volume must be within " << soundmaxvolume << " units and " << soundminvolume << " units." << endl;
             }
         } else {
             //if item is nonexistent in the alias table
             stopcompile = true;
-            cerr << "Error with item '" << item.soundname << "': Item does not exist in alias table (as a keyword or a sound)";
+            cerr << "\n\nError with item '" << item.soundname << "': Item does not exist in alias table (as a keyword or a sound)";
         }
     } if (stopcompile) { return -1; }
     cout << " No errors found!";

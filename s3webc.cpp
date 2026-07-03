@@ -49,7 +49,7 @@ void GetAliasTable (vector<string> &keywords, vector<string> &functions, vector<
                 ifkeyword = true;
             }
             prev = prev + item;
-        }        
+        }
     }
 }
 
@@ -71,10 +71,10 @@ int main() {
     LoadFromFile(file, input); 
     if (input == "") {
         cerr << endl << "File was unable to be loaded. Make sure the file exists before retrying" << endl;
-        return -2;
+        return 2;
     } else if (GetFileType(file) != ".s30web") {
         cerr << endl << "File is of an invalid file format. Make sure the file is an '.s30web' file before retrying" << endl;
-        return -2;
+        return 2;
     }
 
     //get alias table
@@ -98,7 +98,7 @@ int main() {
             prev = "";
         } else {
             prev = prev + item;
-        }        
+        }
     }//for (string posstr : pos) { cout << "[" << posstr << "], "; }
 
     //split commands into seperate tokens/arguments
@@ -140,7 +140,7 @@ int main() {
     }
     //Specific command argument related errors
     for (auto item : commands) {
-        ++line;        
+        ++line;
         if (AliasExists(keywords, item.soundname)) {
             //do the actual checks for keywords
             //get command index
@@ -180,7 +180,7 @@ int main() {
             stopcompile = true;
             cerr << "\n\nError with item '" << item.soundname << "': Item does not exist in alias table (as a keyword or a sound)";
         }
-    } if (stopcompile) { return -1; }
+    } if (stopcompile) { return 1; }
     cout << " No errors found!";
 
     //convert to operation codes and write it all to a file

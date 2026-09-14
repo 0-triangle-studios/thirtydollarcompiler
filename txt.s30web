@@ -1,7 +1,7 @@
 # this is a default example of a file made using the s3webc compiler #
 
-newline; 
-	setspeed,400
+newline,4,80; 
+	setspeed,400;
 	looptarget;
 	vineboom;&&;vineboom;
 	vineboom;
@@ -20,3 +20,4 @@ newline;
 	gotoloop;
 	gotoloop;
 	gotoloop;
+pitchshift,2,1;

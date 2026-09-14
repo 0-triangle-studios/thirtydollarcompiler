@@ -62,8 +62,9 @@ int main() {
     const short int soundminspeed = -60;
     const unsigned short int soundmaxvolume = 400;
     const unsigned short int soundminvolume = 0;
-    //first two values of criticals MUST be speed and volume
-    /*const*/vector<string> criticals = {"!speed", "!volume", "!stop", "!jump", "!target"};
+    //first three values of criticals MUST be speed, volume and transpose
+    /*const*/vector<string> criticals = {"!speed", "!volume", "!transpose", "!stop", "!jump", "!target"};
+    const unsigned char critcount = 3;
 
     string file = "", input = ""; 
     cout << "\nInput s30web file: "; getline(cin, file);
@@ -152,7 +153,7 @@ int main() {
                     cerr << "\n\nError with keyword item '" << item.soundname << "': First argument must be either greater than or equal to zero" << endl; 
                     stopcompile = true;
                 }
-                if ((opcodes[commandID] == criticals[1] || opcodes[commandID] == criticals[0])) {
+                for (unsigned char crit; crit <= critcount; ++crit) {
                     if ( !(item.volume >= -1 && item.volume <= 1)) {
                         cerr << "\n\nError with keyword item '" << item.soundname << "': Second argument must be within 1 and -1 (as those numbers map to it's button options)";
                         stopcompile = true;
@@ -160,7 +161,7 @@ int main() {
                 }
             } else {
                 if (item.speed != 0 || item.volume != 0) {
-                    cerr << "Warning with keyword item '" << item.soundname << "': This is a special keyword that takes no arguments. All arguments will be ignored" << endl;
+                    cerr << "\nWarning with keyword item '" << item.soundname << "': This is a special keyword that takes no arguments. All arguments will be ignored" << endl;
                     //forcefully ignore arguments provided
                     item.speed = 0; item.volume = 0;
                 }
@@ -199,7 +200,14 @@ int main() {
             if (!AliasExists(keywords, item.soundname)) { 
                 opcode += "%" + to_string(item.volume);
             } else {
-                if (opcodes[commandID] == criticals[1] || opcodes[commandID] == criticals[0]) {
+                bool critcheck;
+                for (unsigned char crit; crit <= critcount; ++crit) {
+                    if (opcodes[commandID] == criticals[1]) {
+                        critcheck = true;
+                        break;
+                    }
+                }
+                if (critcheck) {
                     //setspeed and setvolume has a custom character instead of a number
                     if (item.volume == 1) {
                         opcode += "@x";

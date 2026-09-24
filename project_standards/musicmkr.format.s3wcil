@@ -4,20 +4,24 @@
 ## '&var = 2' constant variables come from the programming language##
 ## 'a,(&var + (2-4));' basic arithmetic w/o recursion comes from the programming language##
 ## 'repeat(&x){a;}' basic control flow comes from the programming language##
-## 'set(label); goto(label)' goto support does NOT come from the programming language##
+## 'set(label); goto(label);' goto support does NOT come from the programming language##
 
-## 7 (out of 13) system commands remain unaffected by the programming language##
+## '[%fn1, fn2]' function combination does NOT come from the programming language##
+## 'if(&x == &y)' logical control flow does NOT come from the programming language##
+## 'get $file.s3wcil$' file importing via functions does NOT come from the programming language##
 
-&var = 2
-&var2 = (3 - &var)
+## 7 (out of 13, remaining 6) system commands remain unaffected by the programming language##
 
-%func() = {
+&var = 2;
+&var2 = (3 - &var);
+
+%func = {
     a, 2, 3;
     b;
     c;
 }
 
-%func_w_args(&arg1 &arg2) = {
+%func_w_args<&arg1 &arg2> = {
     a, &arg1;
     c;
     b, &var, (&arg2 + &var);

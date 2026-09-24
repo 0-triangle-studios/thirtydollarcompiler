@@ -53,7 +53,9 @@ void GetAliasTable (vector<string> &keywords, vector<string> &functions, vector<
     }
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    const string aliastable = "s3cfg.at";
+
     const char escapechar = *";";
     const char seperatorchar = *",";
     const char commentchar = *"#";
@@ -66,22 +68,33 @@ int main() {
     /*const*/vector<string> criticals = {"!speed", "!volume", "!transpose", "!stop", "!jump", "!target"};
     const unsigned char critcount = 3;
 
-    string file = "", input = ""; 
-    cout << "\nInput s30web file: "; getline(cin, file);
-    cout << endl << "Loading file...";
-    LoadFromFile(file, input); 
-    if (input == "") {
-        cerr << endl << "File was unable to be loaded. Make sure the file exists before retrying" << endl;
+    string file = "", input = "";
+    if (argc > 2) {
+        cerr << endl << "the $30 Web Compiler does not support multi-file compilation as of the moment.\n";
+        cerr << "Please compile the files individually instead of all at once" << endl;
         return 2;
-    } else if (GetFileType(file) != ".s30web") {
-        cerr << endl << "File is of an invalid file format. Make sure the file is an '.s30web' file before retrying" << endl;
-        return 2;
+    } else {
+        if (argc == 2) {
+            file = argv[1];
+            cout << argv[1];
+        } else {
+            cout << "\nInput s30web file: "; getline(cin, file);
+        }
+        cout << endl << "Loading file '" << file << "'...";
+        LoadFromFile(file, input); 
+        if (input == "") {
+            cerr << endl << "File '" << file << "' was unable to be loaded. Make sure the file exists before retrying" << endl;
+            return 2;
+        } else if (GetFileType(file) != ".s30web") {
+            cerr << endl << "File is of an invalid file format. Make sure the file is an '.s30web' file before retrying" << endl;
+            return 2;
+        }
     }
 
     //get alias table
     vector<string> keywords, functions, opcodes;
     cout << endl << "Retrieving alias table...";
-    GetAliasTable(keywords, functions, opcodes, "s3cfg.at");
+    GetAliasTable(keywords, functions, opcodes, aliastable);
     //split file into separate commands
     vector<string> pos;
     string prev = "";
@@ -184,7 +197,7 @@ int main() {
     } if (stopcompile) { return 1; }
     cout << " No errors found!";
 
-    //convert to operation codes and write it all to a file
+    //convert to operation codes and write it all to a buffer (pos)
     pos = {};
     cout << endl << "Mapping commands to thirtydollar.website operation codes";
     for (auto item : commands) {
@@ -231,9 +244,9 @@ int main() {
     if (output == "") {
         cout << "\n\nFile was not able to be written. Fix any errors before recompiling, or make sure your file is not corrupted." << endl;
     } else {
-    string outputname = GetFileName(file, "moai");
-    SaveToFile(outputname, output);
-    cout << "\n\nAll done! You can see the compiled .moai file in your current directory, under the name of '" << outputname << "'!" << endl;
-    return 0;
+        string outputname = GetFileName(file, "moai");
+        SaveToFile(outputname, output);
+        cout << "\n\nAll done! You can see the compiled .moai file in your current directory, under the name of '" << outputname << "'!" << endl;
+        return 0;
     }
 }

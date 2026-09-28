@@ -2,20 +2,27 @@
 #include <vector>
 using namespace std;
 
+typedef struct Function {
+    string name;
+    vector<string> args;
+    vector<string> contents;
+} Function;
+
 int main() {
-    string input = "@func {\na, 2, 3;\nb;\nc;\n} &var = 4;";
+    string input = "@func &argx &argy {\na, 2, 3;\nb;\nc;\n} @func2 &argb &argc {\nc;\n} &var = 4;";
     //parse words into data (and command later)
     string temp = "";
-    bool isvar, isfunc;
+    //Split the strings into variables, functions, and their values and commands
+    bool isvar = 0, isfunc = 0;
     vector<string> var_name;
     vector<int> var_value;
     vector<string> func_header;
-    vector<string> func_command;
-    //xi stands for indeX Input
-    for (unsigned int xi = 0; xi >= 0; ++xi) {
+    vector<string> *func_command = new vector<string>;
+    //xi stands for indeX Input, and also this is an infinite loop
+    for (unsigned int xi = 0;; ++xi) {
         //parse text
         if (input[xi] == *"\0") {
-            //reached end of string
+            //exit the loop
             break;
         } else if (input[xi] == *" " || input[xi] == *"\n" || input[xi] == *"\t") {
             //do nothing
@@ -27,7 +34,7 @@ int main() {
                     temp = "";
                 } else if (input[xi] == *"}") {
                     //store all commands
-                    func_command.push_back(temp);
+                    (*func_command).push_back(temp);
                     //reset all
                     temp = "";
                     isfunc = false;
@@ -54,18 +61,61 @@ int main() {
         }
 
         //check for variable characters (& and %)
+        //check if it is a function
         if (input[xi] == *"@") {
             isfunc = true;
         }
-        if (input[xi] == *"&") {
-            //make sure it is a variable
+        //check if it is a non function variable
+        if (input[xi] == *"&" && !isfunc) {
+            
             isvar = true;
         } 
     }
     for (unsigned char d = 0; d < (func_header.end() - func_header.begin()); ++d) {
-        cout << "Function Name: " << func_header[d] << "\nValue: " << func_command[d] << endl;
+        cout << "Function Name: " << func_header[d] << "\n\tContents: " <<  (*func_command)[d] << endl;
     }
     for (unsigned char d = 0; d < (var_name.end() - var_name.begin()); ++d) {
-        cout << "Variable Name: " << var_name[d] << "\nValue: " << var_value[d] << endl;
+        cout << "Variable Name: " << var_name[d] << "\n\tValue: " << var_value[d] << endl;
     }
+
+    //Parse function names and contents
+    vector<Function> *functions = new vector<Function>;
+    Function tempfn = {"", {}, {}}; 
+    for (string name : func_header) {
+        bool isname = true;
+        string temp = "";
+        //parse string
+        for(char ch : name) {
+            if (ch == *"&") {
+                if (isname) {
+                    //put name into tempfn.name
+                    tempfn.name = temp;
+                    isname = false;
+                } else {
+                    //put arguments into tempfn.args
+                    tempfn.args.push_back(temp);
+                }
+                //reset temp
+                temp = "";
+            } else {
+                //continue adding to temp
+                temp += ch;
+                //cout << temp << endl;
+            }
+        } //push back final temp
+        tempfn.args.push_back(temp);
+        //save tempfn's headers to functions
+        (*functions).push_back(tempfn);
+
+        //output func headers, for debugging
+        cout << "Func name:" << tempfn.name << endl;
+        for (string x : tempfn.args) {
+            cout << "\tFunc arg:" << x << endl;
+        }
+        //reset tempfn
+        tempfn = {"", {}, {}}; 
+    }
+    //clean up memory
+    delete func_command;
+    delete functions;
 }

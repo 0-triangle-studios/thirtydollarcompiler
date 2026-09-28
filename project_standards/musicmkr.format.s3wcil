@@ -6,7 +6,7 @@
 ## 'repeat(&x){a;}' basic control flow comes from the programming language##
 ## 'set(label); goto(label);' goto support does NOT come from the programming language##
 
-## '[@fn1, fn2]' function combination does NOT come from the programming language##
+## '[@fn1; @fn2;]' function combination does NOT come from the programming language##
 ## 'if(&x == &y)' logical control flow does NOT come from the programming language##
 ## 'get $file.s3wcil$' file importing via functions does NOT come from the programming language##
 
@@ -21,7 +21,7 @@
     c;
 }
 
-@func_w_args<&arg1 &arg2> {
+@func_w_args &arg1 &arg2 {
     a, &arg1;
     c;
     b, &var, (&arg2 + &var);

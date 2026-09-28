@@ -2,7 +2,7 @@
 #hashtags marks a comment#
 
 newline; # 'newline;' marks a section#
-	meme1,#speed,#vol; 	#format#
+	meme1,&speed,&vol; 	#format#
 	meme2;		   	#without variable changes#
 	meme1,2,-1;&&;meme1,-5;	#combination of sounds#
 newline;

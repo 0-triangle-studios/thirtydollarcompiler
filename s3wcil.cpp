@@ -9,7 +9,7 @@ typedef struct Function {
 } Function;
 
 int main() {
-    string input = "@func &argx &argy {\na, 2, 3;\nb;\nc;\n} @func2 &argb &argc {\nc;\n} &var = 4;";
+    string input = "@func &argx &argy {\na, 2, 3;\nb;\nc;\n} @main {\nc;@func, 2, 5;\n} &var = 4;";
     //parse words into data (and command later)
     string temp = "";
     //Split the strings into variables, functions, and their values and commands
@@ -81,11 +81,11 @@ int main() {
     //Parse function names and contents
     vector<Function> *functions = new vector<Function>;
     Function tempfn = {"", {}, {}}; 
-    for (string name : func_header) {
+    for (unsigned int nm = 0; nm < (func_header.end() - func_header.begin()); ++nm) {
         bool isname = true;
         string temp = "";
-        //parse string
-        for(char ch : name) {
+        //parse function header
+        for(char ch : func_header[nm]) {
             if (ch == *"&") {
                 if (isname) {
                     //put name into tempfn.name
@@ -103,17 +103,41 @@ int main() {
                 //cout << temp << endl;
             }
         } //push back final temp
-        tempfn.args.push_back(temp);
-        //save tempfn's headers to functions
-        (*functions).push_back(tempfn);
-
-        //output func headers, for debugging
-        cout << "Func name:" << tempfn.name << endl;
-        for (string x : tempfn.args) {
-            cout << "\tFunc arg:" << x << endl;
+        if (isname) {
+            tempfn.name = temp;
+        } else {
+            tempfn.args.push_back(temp);
         }
+
+        temp = "";
+        //parse function commands
+        for (char ch : (*func_command)[nm]) {
+            if (ch == *";") {
+                //put command into tempfn.contents
+                tempfn.contents.push_back(temp);
+                //reset temp
+                temp = "";
+            } else {
+                //continue adding to temp
+                temp += ch;
+            }
+        }
+        //save tempfn to functions
+        (*functions).push_back(tempfn);
         //reset tempfn
         tempfn = {"", {}, {}}; 
+    }
+
+    //Evaluate function content
+    for(Function fn : (*functions)) {
+        //output func headers, for debugging
+        cout << "Func name:" << fn.name << endl;
+        for (string x : fn.args) {
+            cout << "    Func arg:" << x << endl;
+        }
+        for (string x : fn.contents) {
+            cout << "\tFunc command:" << x << endl;
+        }
     }
     //clean up memory
     delete func_command;

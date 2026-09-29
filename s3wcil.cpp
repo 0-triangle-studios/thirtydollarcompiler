@@ -2,14 +2,53 @@
 #include <vector>
 using namespace std;
 
+//s3ml function data structure
 typedef struct Function {
     string name;
     vector<string> args;
     vector<string> contents;
 } Function;
 
+//small function to get the index of str vector item
+inline unsigned int StrGetIndex(vector<string>& list, string& item) {
+    for (unsigned int i = 0; i < (list.end() - list.begin()); ++i) {
+        if (list[i] == item) { return i; }
+    }
+    std::cout << "Not found" << std::endl;
+    //if not found, return what should be an invalid index
+    return (2 + list.end() - list.begin());
+} 
+//main function for evaluating variables
+string SolveAllVars(string input, vector<string> &var_name, vector<int> &var_value) {
+    //parse words
+    string temp = "";
+    string pos;
+    bool isvar = false;
+    for(char i : input) {
+        if (i == *" ") {
+            //do nothing
+        } else if (i == *"&") {
+            isvar = true;
+        } else if (i == *",") {
+            if (isvar) {
+                //get corresponding var value assigned to it's var name
+                const unsigned int varlc = StrGetIndex(var_name, temp);
+                pos += to_string(var_value[varlc]) + ",";
+                isvar = false;
+            } else {
+                pos += temp + ",";
+            }
+            temp = "";
+        } else {
+            temp += i;
+        }
+    }
+    pos += temp;
+    return pos;
+}
+
 int main() {
-    string input = "@func &argx &argy {\na, 2, 3;\nb;\nc;\n} @main {\nc;@func, 2, 5;\n} &var = 4;";
+    string input = "&var = 4; @func {\na, &var, 3;\nb;\nc;\n} @main {\nc;@func, &var, 5;\n}";
     //parse words into data (and command later)
     string temp = "";
     //Split the strings into variables, functions, and their values and commands
@@ -136,7 +175,7 @@ int main() {
             cout << "    Func arg:" << x << endl;
         }
         for (string x : fn.contents) {
-            cout << "\tFunc command:" << x << endl;
+            cout << "\tFunc command:" << SolveAllVars(x, var_name, var_value) << endl;
         }
     }
     //clean up memory

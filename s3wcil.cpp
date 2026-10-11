@@ -10,7 +10,7 @@ typedef struct Function {
 } Function;
 
 //small function to get the index of str vector item
-inline unsigned int StrGetIndex(vector<string>& list, string& item, bool force = false) {
+inline unsigned int StrGetIndex(vector<string>& list, string item, bool force = false) {
     for (unsigned int i = 0; i < (list.end() - list.begin()); ++i) {
         if (list[i] == item) { return i; }
     }
@@ -35,7 +35,7 @@ string SolveAllVars(string input, vector<string> &var_name, vector<int> &var_val
             if (isvar) {
                 //get corresponding var value assigned to it's var name
                 if (StrGetIndex(input_args, temp, true) <= (input_args.end() - input_args.begin())) {
-                    cout << StrGetIndex(input_args, temp) << temp;
+                    //cout << StrGetIndex(input_args, temp) << temp;
                     pos += "&" + to_string(1 + StrGetIndex(input_args, temp)) + ",";
                 } else {
                     pos += to_string(var_value[StrGetIndex(var_name, temp)]) + ",";
@@ -53,6 +53,37 @@ string SolveAllVars(string input, vector<string> &var_name, vector<int> &var_val
     //get final variable/argument 
     pos += (isvar) ? to_string(var_value[StrGetIndex(var_name, temp)]) : temp;
     return pos;
+}
+
+void ParseFunctionHeader(Function &tempfn, string &func_header, bool init = true) {
+    bool isname = true;
+    string temp = "";
+    char seperator = (init) ? *"&" : *",";
+    //parse function header
+    for(char ch : func_header) {
+        if (ch == seperator) {
+            if (isname) {
+                //put name into tempfn.name
+                tempfn.name = temp;
+                isname = false;
+            } else {
+                //put arguments into tempfn.args
+                tempfn.args.push_back(temp);
+            }
+            //reset temp
+            temp = "";
+        } else {
+            //continue adding to temp
+            temp += ch;
+            //cout << temp << endl;
+        }
+    } //push back final temp
+    if (isname) {
+        tempfn.name = temp;
+    } else {
+        tempfn.args.push_back(temp);
+    }
+    temp = "";
 }
 
 int main() {
@@ -121,36 +152,11 @@ int main() {
 
     //Parse function names and contents
     vector<Function> *functions = new vector<Function>;
+    vector<string> func_names;
     Function tempfn = {"", {}, {}}; 
     for (unsigned int nm = 0; nm < (func_header.end() - func_header.begin()); ++nm) {
-        bool isname = true;
-        string temp = "";
         //parse function header
-        for(char ch : func_header[nm]) {
-            if (ch == *"&") {
-                if (isname) {
-                    //put name into tempfn.name
-                    tempfn.name = temp;
-                    isname = false;
-                } else {
-                    //put arguments into tempfn.args
-                    tempfn.args.push_back(temp);
-                }
-                //reset temp
-                temp = "";
-            } else {
-                //continue adding to temp
-                temp += ch;
-                //cout << temp << endl;
-            }
-        } //push back final temp
-        if (isname) {
-            tempfn.name = temp;
-        } else {
-            tempfn.args.push_back(temp);
-        }
-
-        temp = "";
+        ParseFunctionHeader(tempfn, func_header[nm], true);
         //parse function commands
         for (char ch : (*func_command)[nm]) {
             if (ch == *";") {
@@ -168,13 +174,17 @@ int main() {
         }
         //save tempfn to functions
         (*functions).push_back(tempfn);
+        func_names.push_back("@" + tempfn.name);
         //reset tempfn
         tempfn = {"", {}, {}}; 
     }
+    //for (string d : func_names) { cout << d << endl; }
+
     for (unsigned char d = 0; d < (var_name.end() - var_name.begin()); ++d) {
         cout << "Variable Name: " << var_name[d] << "\n\tValue: " << var_value[d] << endl;
     }
-
+    //clean up memory
+    delete func_command;
 
     //Evaluate function content
     for (Function fn : (*functions)) {
@@ -189,8 +199,25 @@ int main() {
         for (string x : fn.contents) {
             cout << "\tItem:" << x << endl;
         }
+    }cout << "\n---- REAL FILE BEGINS HERE ----\n";
+
+    //Evaluate function content
+    Function fn = (*functions)[StrGetIndex(func_names, "@main")];
+    for (string x : fn.contents) {
+        if (x[0] == *"@") {
+            Function callfn;
+            ParseFunctionHeader(callfn, x, false);
+            //get contents of this, and replace &* with args provided
+            for (string c : 
+                (*functions)[StrGetIndex(func_names, callfn.name)].contents
+            ) {
+                //args resolving goes here
+                cout << c << ";" << endl;
+            }
+        } else {
+            cout << x << ";" << endl;
+        }
     }
-    //clean up memory
-    delete func_command;
+    //clean up more memory
     delete functions;
 }

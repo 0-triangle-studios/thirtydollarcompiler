@@ -3,8 +3,8 @@
 ## '@x {a;b;}' void functions come from the programming language##
 ## '&var = 2' constant variables come from the programming language##
     ## 'a,(&var + (2-4));' basic arithmetic w/o recursion comes from the programming language##
-    ## 'repeat(&x){a;}' basic control flow comes from the programming language##
-##(2)
+    ## 'repeat(&x)[a;]' basic control flow comes from the programming language##
+##(2/6)
 ## 'set(label); goto(label);' goto support does NOT come from the programming language##
 
 ## '[@fn1; @fn2;]' function combination does NOT come from the programming language##

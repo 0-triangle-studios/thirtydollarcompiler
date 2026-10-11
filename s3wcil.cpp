@@ -10,16 +10,18 @@ typedef struct Function {
 } Function;
 
 //small function to get the index of str vector item
-inline unsigned int StrGetIndex(vector<string>& list, string& item) {
+inline unsigned int StrGetIndex(vector<string>& list, string& item, bool force = false) {
     for (unsigned int i = 0; i < (list.end() - list.begin()); ++i) {
         if (list[i] == item) { return i; }
     }
-    std::cout << "Not found" << std::endl;
+    if (!force) {
+        std::cerr << "Index of Variable '" << item << "' is Not found. A segmentation fault has now occurred" << std::endl;
+    }
     //if not found, return what should be an invalid index
     return (2 + list.end() - list.begin());
 } 
 //main function for evaluating variables
-string SolveAllVars(string input, vector<string> &var_name, vector<int> &var_value) {
+string SolveAllVars(string input, vector<string> &var_name, vector<int> &var_value, vector<string> &input_args) {
     //parse words
     string temp = "";
     string pos;
@@ -32,23 +34,29 @@ string SolveAllVars(string input, vector<string> &var_name, vector<int> &var_val
         } else if (i == *",") {
             if (isvar) {
                 //get corresponding var value assigned to it's var name
-                const unsigned int varlc = StrGetIndex(var_name, temp);
-                pos += to_string(var_value[varlc]) + ",";
+                if (StrGetIndex(input_args, temp, true) <= (input_args.end() - input_args.begin())) {
+                    cout << StrGetIndex(input_args, temp) << temp;
+                    pos += "&" + to_string(1 + StrGetIndex(input_args, temp)) + ",";
+                } else {
+                    pos += to_string(var_value[StrGetIndex(var_name, temp)]) + ",";
+                }
                 isvar = false;
             } else {
                 pos += temp + ",";
             }
+            //reset all temp
             temp = "";
         } else {
             temp += i;
         }
     }
-    pos += temp;
+    //get final variable/argument 
+    pos += (isvar) ? to_string(var_value[StrGetIndex(var_name, temp)]) : temp;
     return pos;
 }
 
 int main() {
-    string input = "&var = 4; @func {\na, &var, 3;\nb;\nc;\n} @main {\nc;@func, &var, 5;\n}";
+    string input = "&var = 4; &arg = 3; @func &xrg &yrg {\na, &yrg, &var;\nb;\nc;\n} @main {\nc;@func, &var, 5;\n}";
     //parse words into data (and command later)
     string temp = "";
     //Split the strings into variables, functions, and their values and commands
@@ -110,12 +118,6 @@ int main() {
             isvar = true;
         } 
     }
-    for (unsigned char d = 0; d < (func_header.end() - func_header.begin()); ++d) {
-        cout << "Function Name: " << func_header[d] << "\n\tContents: " <<  (*func_command)[d] << endl;
-    }
-    for (unsigned char d = 0; d < (var_name.end() - var_name.begin()); ++d) {
-        cout << "Variable Name: " << var_name[d] << "\n\tValue: " << var_value[d] << endl;
-    }
 
     //Parse function names and contents
     vector<Function> *functions = new vector<Function>;
@@ -152,6 +154,9 @@ int main() {
         //parse function commands
         for (char ch : (*func_command)[nm]) {
             if (ch == *";") {
+                //resolve constant (&) vars 
+                //any math parsing/calculation goes right here
+                temp = SolveAllVars(temp, var_name, var_value, tempfn.args);
                 //put command into tempfn.contents
                 tempfn.contents.push_back(temp);
                 //reset temp
@@ -166,16 +171,23 @@ int main() {
         //reset tempfn
         tempfn = {"", {}, {}}; 
     }
+    for (unsigned char d = 0; d < (var_name.end() - var_name.begin()); ++d) {
+        cout << "Variable Name: " << var_name[d] << "\n\tValue: " << var_value[d] << endl;
+    }
+
 
     //Evaluate function content
-    for(Function fn : (*functions)) {
-        //output func headers, for debugging
-        cout << "Func name:" << fn.name << endl;
+    for (Function fn : (*functions)) {
+        if (fn.name == "main") {
+            cout << "Main function found: " << fn.name << endl;
+        } else {
+            cout << "Custom function: " << fn.name << endl;
+        }
         for (string x : fn.args) {
-            cout << "    Func arg:" << x << endl;
+            cout << "    Argument:" << x << endl;
         }
         for (string x : fn.contents) {
-            cout << "\tFunc command:" << SolveAllVars(x, var_name, var_value) << endl;
+            cout << "\tItem:" << x << endl;
         }
     }
     //clean up memory
